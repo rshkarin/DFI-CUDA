@@ -1,0 +1,15 @@
+#ifndef tiff_routines_h
+#define tiff_routines_h
+
+#include <tiffio.h>
+
+int tiff_decode_complex(TIFF *tif, cufftComplex *buffer, int offset);
+cufftComplex *tiff_read_complex(const char *filename,
+				int center_pos,
+                                int *bits_per_sample,
+                                int *samples_per_pixel,
+                                int *width,
+                                int *height);
+void tiff_write_complex(const char *filename, cufftComplex *data, int width, int height);
+
+#endif

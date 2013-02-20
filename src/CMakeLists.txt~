@@ -1,0 +1,42 @@
+cmake_minimum_required(VERSION 2.6)
+
+# --- Set sources -------------------------------------------------------------
+set(dfi_SRCS
+    main.cu
+    tiff-routines.c
+)
+
+set(dfi_HDRS
+    tiff-routines.h
+)
+
+# --- Find packages and libraries ---------------------------------------------
+set(dfi_LIBS
+    ${GLIB2_LIBRARIES}
+    ${GOBJECT2_LIBRARIES}
+)
+
+find_package(TIFF REQUIRED)
+if (TIFF_FOUND)
+    set(dfi_LIBS ${dfi_LIBS} ${TIFF_LIBRARIES})
+    include_directories(${TIFF_INCLUDE_DIRS})
+endif ()
+
+find_package(CUDA REQUIRED)
+if (CUDA_FOUND)
+    set(dfi_LIBS ${dfi_LIBS} ${CUDA_CUFFT_LIBRARIES})
+endif ()
+
+# --- Target ------------------------------------------------------------------
+include_directories(
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+cuda_add_executable(${PROJECT} 
+		    ${dfi_SRCS}
+		    OPTIONS -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30)
+
+target_link_libraries(${PROJECT} ${dfi_LIBS})
+
+
+

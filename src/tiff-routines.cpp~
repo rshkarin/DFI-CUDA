@@ -1,0 +1,123 @@
+#include <cstdlib>
+#include <cmath>
+#include <tiffio.h>
+#include "tiff-routines.h"
+
+int tiff_decode_complex(TIFF *tif, cufftComplex *buffer, int offset)
+{
+  const int strip_size = TIFFStripSize(tif);
+  const int n_strips = TIFFNumberOfStrips(tif);
+
+  printf("\nstrip_size:%d ; n_strips:%d\n", strip_size, n_strips);
+ 
+  int result = 0;
+  
+  int width, height;
+  
+  TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+  TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+  
+  float *temp_buffer = (float *)malloc(strip_size);
+  
+  for (int strip = 0; strip < n_strips; strip++) {
+result = TIFFReadEncodedStrip(tif, strip, temp_buffer, strip_size);
+
+if (result == -1)
+return 0;
+
+int pixels_per_strip = strip_size / sizeof(float);
+int rows = pixels_per_strip / width;
+
+for(int i = 0; i < rows; ++i) {
+for(int j = offset; j < width; ++j) {
+buffer[strip * (pixels_per_strip - rows * offset) + i * (width-offset) + j - offset].x = temp_buffer[i * width + j];
+buffer[strip * (pixels_per_strip - rows * offset) + i * (width-offset) + j - offset].y = 0.0;
+}
+}
+  }
+  
+  return 1;
+}
+
+cufftComplex *tiff_read_complex(const char *filename,
+int center_pos,
+                                int *bits_per_sample,
+                                int *samples_per_pixel,
+                                int *width,
+                                int *height)
+{
+  TIFF *image;
+  int *bytes_per_strip;
+  
+  // Create the TIFF file
+  if((image = TIFFOpen(filename, "r")) == NULL){
+    printf("Could not open %s for reading\n", filename);
+    return NULL;
+  }
+
+  // Get TIFF Attributes
+  TIFFGetField(image, TIFFTAG_BITSPERSAMPLE, bits_per_sample);
+  TIFFGetField(image, TIFFTAG_SAMPLESPERPIXEL, samples_per_pixel);
+  TIFFGetField(image, TIFFTAG_IMAGEWIDTH, width);
+  TIFFGetField(image, TIFFTAG_IMAGELENGTH, height);
+
+  if (*samples_per_pixel > 1) {
+    printf("%s has %i samples per pixel (%i bps)",
+           filename, *samples_per_pixel, *bits_per_sample);
+  }
+
+  int offset = 0;
+  if (center_pos != -1) {
+offset = *width - (*width - center_pos) * 2;
+*width = (*width - center_pos) * 2;
+  }
+
+  cufftComplex *buffer =
+  (cufftComplex *)malloc((*height) * (*width) * sizeof(cufftComplex));
+  
+  if (!tiff_decode_complex(image, buffer, offset)) {
+    goto error_close;
+  }
+  
+  TIFFClose(image);
+  return buffer;
+  
+error_close:
+  TIFFClose(image);
+  return NULL;
+}
+
+void tiff_write_complex(const char *filename, cufftComplex *data, int width, int height)
+{
+  TIFF *image;
+  
+  // Open the TIFF file
+  if((image = TIFFOpen(filename, "w")) == NULL){
+    printf("Could not open output.tif for writing\n");
+    return;
+  }
+  
+  // Set TIFF Attributes
+  TIFFSetField(image, TIFFTAG_IMAGEWIDTH, width);
+  TIFFSetField(image, TIFFTAG_IMAGELENGTH, height);
+  TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, 32);
+  TIFFSetField(image, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+  TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, 1);
+  TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+  TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, 1);
+  
+  // Scanline sizew
+  int scanlineSize = TIFFScanlineSize(image);
+  
+  for (int y = 0; y < height; y++) {
+    float *vec_data = (float *)malloc(scanlineSize);
+    
+    for (int x = 0; x < width; x++) {
+      vec_data[x] = fabsf((float)data[x + y * width].x);
+    }
+
+    TIFFWriteScanline(image, vec_data, y, 0);
+  }
+  
+  TIFFClose(image);
+}

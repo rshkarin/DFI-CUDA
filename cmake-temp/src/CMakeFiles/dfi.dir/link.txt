@@ -1,0 +1,1 @@
+/usr/bin/c++       CMakeFiles/dfi.dir/./dfi_generated_main.cu.o  -o ../../build/dfi -rdynamic /usr/local/cuda/lib64/libcudart.so -lcuda -lglib-2.0 -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 -ltiff /usr/local/cuda/lib64/libcufft.so -lgobject-2.0 -lgthread-2.0 -lrt -ltiff /usr/local/cuda/lib64/libcufft.so -Wl,-rpath,/usr/local/cuda/lib64 

@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/rshkarin/various-workspace/DFR_cuda/src/tiff-routines.cpp
+cstdlib
+-
+cmath
+-
+tiff-routines.h
+/home/rshkarin/various-workspace/DFR_cuda/src/tiff-routines.h
+
+/home/rshkarin/various-workspace/DFR_cuda/src/tiff-routines.h
+tiffio.h
+-
+
