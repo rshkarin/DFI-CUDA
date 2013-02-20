@@ -320,7 +320,7 @@ int interp_rows, int interp_cols,
 
     if (sqrt_val <= PI) {
       //set the sign of hypotenuse
-      float omega_si = sqrt_val * ((atan_val > 0)?1:((atan_val < 0)?-1:0));
+      float omega_si = sqrt_val * ((atan_val > 0)?1:((atan_val < 0)?-1:1));
 
       //get radius on source image and check the border values
       //float t_val = 1 +
@@ -423,7 +423,7 @@ __global__ void shift2d(cufftComplex *input,
 
 void dfi_process_sinogram(const char *tiff_input, const char *tiff_output, int center_rotation)
 {
-  cudaSetDevice(0);
+  cudaSetDevice(1);
 
   if(!tiff_input) {
     printf("The filename of input is not valid. (pointer tiff_input = %p)", tiff_input);
@@ -447,7 +447,7 @@ void dfi_process_sinogram(const char *tiff_input, const char *tiff_output, int c
   
   /* Read the slice */
   cufftComplex *data_tiff = tiff_read_complex(tiff_input,
-center_rotation,
+					      center_rotation,
                                               &bits_per_sample,
                                               &samples_per_pixel,
                                               &slice_size,
@@ -719,5 +719,5 @@ tiff_write_complex("resources/2d-shifted-spectrum.tif", d_shifted_result_data, i
 }
 
 int main(int argc, char **argv) {
-  dfi_process_sinogram("../resources/recol_sino_565.tif", "../resources/out-sino.tif", 929);
+  dfi_process_sinogram("../resources/sino-egg.tif", "../resources/out-sino.tif", 461);
 }

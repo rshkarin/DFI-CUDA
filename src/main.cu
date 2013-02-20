@@ -7,6 +7,9 @@
 
 #define PI 3.14159265358979323846
 
+//CUDA_LAUNCH_BLOCKING=0 ./dfi
+//CUDA_VISIBLE_DEVICES="0,1,2"
+
 int tiff_decode_complex(TIFF *tif, cufftComplex *buffer, int offset)
 {
   const int strip_size = TIFFStripSize(tif);
